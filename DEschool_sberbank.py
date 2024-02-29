@@ -1,8 +1,10 @@
 import sqlite3
+
 import pandas as pd
 
 
 class Market:
+
     def __init__(self, name='dbo'):
         """
         Initialize a database and all required tables.
@@ -22,16 +24,21 @@ class Market:
         self.log_db = 'log_' + self.dbname_check(name)
         self.db_create()
 
-        self.category_df = self.category_validation(self.csv_import(file='categoris_table.csv', table='categories'))
+        self.category_df = self.category_validation(
+            self.csv_import(file='categoris_table.csv', table='categories'))
         self.category_insert()
 
-        self.goods_df = self.goods_validation(self.csv_import(file='goods_table.csv', table='goods'))
+        self.goods_df = self.goods_validation(
+            self.csv_import(file='goods_table.csv', table='goods'))
         self.goods_insert()
 
-        self.customers_df = self.customers_validation(self.csv_import(file='Persons_table.csv', table='customers'))
+        self.customers_df = self.customers_validation(
+            self.csv_import(file='Persons_table.csv', table='customers'))
         self.customers_insert()
 
-        self.locators_df = self.customers_df[['first_name', 'last_name', 'email', 'additionalInfo']][:]
+        self.locators_df = self.customers_df[[
+            'first_name', 'last_name', 'email', 'additionalInfo'
+        ]][:]
         self.locators_insert()
 
     def db_create(self):
@@ -112,7 +119,8 @@ class Market:
         # Add default category
         cursor.execute('''
                         insert into Categories(id,title,description)
-                        values(0,\'Нет категории\', \'Категория отсутствует в базе или не указана\');''')
+                        values(0,\'Нет категории\', \'Категория отсутствует в базе или не указана\');'''
+                       )
 
         self.add_log(operation='insert', subject='Categories')
 
@@ -211,11 +219,15 @@ class Market:
         raw_df = pd.read_csv(file, sep='\n', names=['chunk'])
         imported_df = raw_df
         if table == 'categories':
-            imported_df = self.import_converting(raw_df, 3, ['id', 'title', 'description'])
+            imported_df = self.import_converting(
+                raw_df, 3, ['id', 'title', 'description'])
         if table == 'goods':
-            imported_df = self.import_converting(raw_df, 4, ['id', 'title', 'price', 'categoryId'])
+            imported_df = self.import_converting(
+                raw_df, 4, ['id', 'title', 'price', 'categoryId'])
         if table == 'customers':
-            imported_df = self.import_converting(raw_df, 5, ['id', 'first_name', 'last_name', 'email', 'gender'])
+            imported_df = self.import_converting(
+                raw_df, 5,
+                ['id', 'first_name', 'last_name', 'email', 'gender'])
         return imported_df
 
     def table_size(self, db_name):
@@ -223,7 +235,8 @@ class Market:
 
         con = sqlite3.connect(self.database)
         cursor = con.cursor()
-        rows = cursor.execute('''SELECT COUNT(*) FROM %s''' % db_name).fetchone()[0]
+        rows = cursor.execute('''SELECT COUNT(*) FROM %s''' %
+                              db_name).fetchone()[0]
         print('Table', db_name, 'contains %s rows' % rows)
         con.commit()
 
@@ -243,7 +256,8 @@ class Market:
 
         con = sqlite3.connect(self.database)
         cursor = con.cursor()
-        for i in cursor.execute('''SELECT * FROM %s LIMIT %s''' % (table_name, limit)):
+        for i in cursor.execute('''SELECT * FROM %s LIMIT %s''' %
+                                (table_name, limit)):
             print(i)
         con.commit()
         return 0
@@ -252,7 +266,8 @@ class Market:
         """Print join of 'Goods' and 'Categories' tables"""
         con = sqlite3.connect(self.database)
         cursor = con.cursor()
-        for i in cursor.execute('''SELECT Goods.title, Goods.price, Categories.title, Categories.description
+        for i in cursor.execute(
+                '''SELECT Goods.title, Goods.price, Categories.title, Categories.description
                                     FROM Goods
                                     LEFT JOIN Categories
                                     ON Goods.categoryId = Categories.id'''):
@@ -280,7 +295,9 @@ class Market:
                 data = (rows.id, rows.title, rows.description)
                 cursor.execute(sql, data)
                 con.commit()
-                self.add_log(operation='insert', subject='Categories', data=str(data))
+                self.add_log(operation='insert',
+                             subject='Categories',
+                             data=str(data))
         except Exception as e:
             print('An error occurred. Database wasn\'t updated.')
             print('Error:', e)
@@ -296,7 +313,9 @@ class Market:
                 data = (rows.id, rows.title, rows.price, rows.categoryId)
                 cursor.execute(sql, data)
                 con.commit()
-                self.add_log(operation='insert', subject='Goods', data=str(data))
+                self.add_log(operation='insert',
+                             subject='Goods',
+                             data=str(data))
         except Exception as e:
             print('An error occurred. Database wasn\'t updated.')
             print('Error:', e)
@@ -307,12 +326,16 @@ class Market:
         con = sqlite3.connect(self.database)
         cursor = con.cursor()
         try:
-            for index, rows in self.customers_df[['id', 'first_name', 'last_name', 'gender']].iterrows():
+            for index, rows in self.customers_df[[
+                    'id', 'first_name', 'last_name', 'gender'
+            ]].iterrows():
                 sql = '''insert into Customers(id,first_name,last_name,gender) values(?, ?, ?, ?);'''
                 data = (rows.id, rows.first_name, rows.last_name, rows.gender)
                 cursor.execute(sql, data)
                 con.commit()
-                self.add_log(operation='insert', subject='Customers', data=str(data))
+                self.add_log(operation='insert',
+                             subject='Customers',
+                             data=str(data))
         except Exception as e:
             print('An error occurred. Database wasn\'t updated.')
             print('Error:', e)
@@ -328,23 +351,34 @@ class Market:
                 data = (rows.first_name, rows.last_name)
                 if cursor.execute(sql, data).fetchone()[0] == 0:
                     sql = '''insert into Locators(first_name, last_name, email, additionalInfo) values(?,?,?,?)'''
-                    data = (rows.first_name, rows.last_name, rows.email, rows.additionalInfo)
+                    data = (rows.first_name, rows.last_name, rows.email,
+                            rows.additionalInfo)
                     cursor.execute(sql, data)
                     con.commit()
-                    self.add_log(operation='insert', subject='Locators', data=str(data))
+                    self.add_log(operation='insert',
+                                 subject='Locators',
+                                 data=str(data))
                 else:
                     sql = '''update Locators set additionalInfo = additionalInfo || ? || ? || '; '
                     where first_name=? and last_name=?'''
-                    data = (rows.email, rows.additionalInfo, rows.first_name, rows.last_name)
+                    data = (rows.email, rows.additionalInfo, rows.first_name,
+                            rows.last_name)
                     cursor.execute(sql, data)
                     con.commit()
-                    self.add_log(operation='update', subject='Locators', data=str(data))
+                    self.add_log(operation='update',
+                                 subject='Locators',
+                                 data=str(data))
         except Exception as e:
             print('An error occurred. Database wasn\'t updated.')
             print('Error:', e)
         con.commit()
 
-    def delivery_add(self, title, price, category_id=0, quantity=1, additionalInfo=None):
+    def delivery_add(self,
+                     title,
+                     price,
+                     category_id=0,
+                     quantity=1,
+                     additionalInfo=None):
         """
         Adds delivery as transaction + warehouse replenishment.
         Delivery must contain only one article's type.
@@ -359,8 +393,11 @@ class Market:
         con.commit()
         self.add_log(operation='insert', subject='Deliveries', data=str(data))
         self.goods_add(title, price, category_id, quantity)
-        self.transactions_add(type='delivery', subject_id=-1, quantity=quantity,
-                              total=quantity * price, additionalInfo=additionalInfo)
+        self.transactions_add(type='delivery',
+                              subject_id=-1,
+                              quantity=quantity,
+                              total=quantity * price,
+                              additionalInfo=additionalInfo)
         print('Record successfully added.')
 
     def goods_add(self, title, price, categoryId=0, count=0, delflg=0):
@@ -376,8 +413,15 @@ class Market:
 
         con.commit()
 
-    def transactions_add(self, type, subject_id, total=0, quantity=1, customer_id=None, discount=0,
-                         additionalInfo=None, date=pd.datetime.now().date()):
+    def transactions_add(self,
+                         type,
+                         subject_id,
+                         total=0,
+                         quantity=1,
+                         customer_id=None,
+                         discount=0,
+                         additionalInfo=None,
+                         date=pd.datetime.now().date()):
         """
         Add new transaction into database. Transaction's type may be different.
         If type = return or sell, subject_id is good_id, in case of delivery - supplier_id
@@ -392,16 +436,19 @@ class Market:
             con = sqlite3.connect(self.database)
             cursor = con.cursor()
 
-            if (cursor.execute('''select count(*)
+            if (cursor.execute(
+                    '''select count(*)
                                     from Goods
-                                    where Goods.id = ? and Goods.delflg = 0''', [subject_id]).fetchone()[0]) == 0:
+                                    where Goods.id = ? and Goods.delflg = 0''',
+                [subject_id]).fetchone()[0]) == 0:
                 print('There are no goods at the warehouse')
             else:
 
                 try:  # Getting personal customers discount
                     sql = '''select Customers_sales.discount from customers left join Customers_sales 
                             on customers.id = Customers_sales.customer_id where customers.id = ?'''
-                    discount = cursor.execute(sql, [customer_id]).fetchone()[0] / 100
+                    discount = cursor.execute(
+                        sql, [customer_id]).fetchone()[0] / 100
                 except:
                     discount = 0
 
@@ -410,10 +457,12 @@ class Market:
                         sql = '''select * from Goods 
                                     left join Categories_sales on
                                     Categories_sales.category_id = Goods.categoryId where Goods.id = ?'''
-                        if cursor.execute(sql, [subject_id]).fetchone()[8] is None:
+                        if cursor.execute(sql,
+                                          [subject_id]).fetchone()[8] is None:
                             discount = 0
                         else:
-                            discount = cursor.execute(sql, [subject_id]).fetchone()[8] / 100
+                            discount = cursor.execute(
+                                sql, [subject_id]).fetchone()[8] / 100
                     except Exception as e:
                         print('Error: ', e)
                         discount = 0
@@ -423,16 +472,19 @@ class Market:
                 sql = '''insert into Transactions(type, total, subject_id, quantity, customer_id, discount, 
                                                     additionalInfo, date) 
                         values(?,?,?,?,?,?,?,?)'''
-                data = (
-                type, round(price * (1 - discount), 2), subject_id, quantity, customer_id, discount, additionalInfo,
-                date)
+                data = (type, round(price * (1 - discount), 2), subject_id,
+                        quantity, customer_id, discount, additionalInfo, date)
                 cursor.execute(sql, data)
-                self.add_log(operation='insert', subject='Transactions', data=str(data))
+                self.add_log(operation='insert',
+                             subject='Transactions',
+                             data=str(data))
 
                 sql = '''update Goods set delflg = 1 where id = ?'''
 
                 cursor.execute(sql, [subject_id])
-                self.add_log(operation='update', subject='Goods', data=subject_id)
+                self.add_log(operation='update',
+                             subject='Goods',
+                             data=subject_id)
                 con.commit()
 
         elif type == 'return':
@@ -440,9 +492,11 @@ class Market:
             con = sqlite3.connect(self.database)
             cursor = con.cursor()
 
-            if (cursor.execute('''select count(*)
+            if (cursor.execute(
+                    '''select count(*)
                                     from Goods
-                                    where Goods.id = ? and Goods.delflg = 1''', [subject_id]).fetchone()[0]) == 0:
+                                    where Goods.id = ? and Goods.delflg = 1''',
+                [subject_id]).fetchone()[0]) == 0:
                 print('There wasn\'t sold such goods')
             else:
                 try:
@@ -451,12 +505,18 @@ class Market:
                     total = cursor.execute(sql, [subject_id]).fetchone()[0]
 
                     sql = '''insert into Transactions(type, total, subject_id, quantity, date) values(?,?,?,?,?)'''
-                    cursor.execute(sql, [type, total, subject_id, quantity, date])
-                    self.add_log(operation='insert', subject='Transactions', data=str(type, total, subject_id, quantity, date))
+                    cursor.execute(sql,
+                                   [type, total, subject_id, quantity, date])
+                    self.add_log(operation='insert',
+                                 subject='Transactions',
+                                 data=str(type, total, subject_id, quantity,
+                                          date))
 
                     sql = '''update Goods set delflg = 0 where id = ?'''
                     cursor.execute(sql, [subject_id])
-                    self.add_log(operation='update', subject='Goods', data=str(subject_id))
+                    self.add_log(operation='update',
+                                 subject='Goods',
+                                 data=str(subject_id))
 
                     con.commit()
 
@@ -468,29 +528,44 @@ class Market:
             cursor = con.cursor()
             sql = '''insert into Transactions(type, total, subject_id, quantity, customer_id, discount, additionalInfo, date) 
                     values(?,?,?,?,?,?,?,?)'''
-            data = (type, total, subject_id, quantity, customer_id, discount, additionalInfo, date)
+            data = (type, total, subject_id, quantity, customer_id, discount,
+                    additionalInfo, date)
             cursor.execute(sql, data)
-            self.add_log(operation='insert', subject='Transactions', data=str(data))
+            self.add_log(operation='insert',
+                         subject='Transactions',
+                         data=str(data))
             con.commit()
 
-    def category_sale_add(self, title=None, category_id=0, discount=0, active=0):
+    def category_sale_add(self,
+                          title=None,
+                          category_id=0,
+                          discount=0,
+                          active=0):
         """Adds discount at one of the categories."""
         con = sqlite3.connect(self.database)
         cursor = con.cursor()
         sql = '''insert into Categories_sales(title,category_id,discount,active) values(?,?,?,?)'''
         data = (title, category_id, discount, active)
         cursor.execute(sql, data)
-        self.add_log(operation='insert', subject='Categories_sales', data=str(data))
+        self.add_log(operation='insert',
+                     subject='Categories_sales',
+                     data=str(data))
         con.commit()
 
-    def customer_sale_add(self, customer_id=0, title=None, discount=0, active=0):
+    def customer_sale_add(self,
+                          customer_id=0,
+                          title=None,
+                          discount=0,
+                          active=0):
         """Adds personal discount to the customer."""
         con = sqlite3.connect(self.database)
         cursor = con.cursor()
         sql = '''insert into Customers_sales(customer_id, title, discount, active) values(?,?,?,?)'''
         data = (customer_id, title, discount, active)
         cursor.execute(sql, data)
-        self.add_log(operation='insert', subject='Customers_sales', data=str(data))
+        self.add_log(operation='insert',
+                     subject='Customers_sales',
+                     data=str(data))
         con.commit()
 
     def goods_sell(self, id):
@@ -512,7 +587,9 @@ class Market:
             print('An error occurred. Database wasn\'t updated.')
             print('Error:', e)
 
-    def revenue_stat(self, start_date=pd.datetime.now().date() - pd.Timedelta('30 days'),
+    def revenue_stat(self,
+                     start_date=pd.datetime.now().date() -
+                     pd.Timedelta('30 days'),
                      end_date=pd.datetime.now().date()):
         """
         Print statistics between two dates by days.
@@ -527,8 +604,9 @@ class Market:
         outcome = 0
         con = sqlite3.connect(self.database)
         cursor = con.cursor()
-        result = cursor.execute('''select id,type,total,date from transactions where date between ? and ?''',
-                                [start_date, end_date]).fetchall()
+        result = cursor.execute(
+            '''select id,type,total,date from transactions where date between ? and ?''',
+            [start_date, end_date]).fetchall()
         con.commit()
 
         # Convert to dataframe
@@ -551,10 +629,14 @@ class Market:
             else:
                 outcome += elem
 
-        print('Income:', income, 'Outcome:', outcome, 'Balance:', income - abs(outcome))
+        print('Income:', income, 'Outcome:', outcome, 'Balance:',
+              income - abs(outcome))
 
-    def user_stat(self, start_date=pd.datetime.now().date() - pd.Timedelta('30 days'),
-                  end_date=pd.datetime.now().date(), level=0.2):
+    def user_stat(self,
+                  start_date=pd.datetime.now().date() -
+                  pd.Timedelta('30 days'),
+                  end_date=pd.datetime.now().date(),
+                  level=0.2):
         """
         Print size of an average transaction between two dates by customer.
 
@@ -568,9 +650,10 @@ class Market:
 
         con = sqlite3.connect(self.database)
         cursor = con.cursor()
-        result = cursor.execute('''select customer_id, date from transactions 
+        result = cursor.execute(
+            '''select customer_id, date from transactions 
                                     where date between ? and ? and type = 'sell\' order by date''',
-                                [start_date, end_date]).fetchall()
+            [start_date, end_date]).fetchall()
 
         con.commit()
 
@@ -613,7 +696,9 @@ class Market:
                 db_name = name + '.db'
         else:
             db_name = 'dbo.db'
-            print('Database name is incorrect or not specified, set to default: dbo.db')
+            print(
+                'Database name is incorrect or not specified, set to default: dbo.db'
+            )
         return db_name
 
     @staticmethod
@@ -632,28 +717,44 @@ class Market:
             if df.iloc[i, 0].count(sep) >= columns_number - 1:
 
                 # Search all substrings(sep) in strings(rows):
-                sep_position = [pos for pos in range(len(df.iloc[i, 0])) if df.iloc[i, 0].startswith(sep, pos)]
+                sep_position = [
+                    pos for pos in range(len(df.iloc[i, 0]))
+                    if df.iloc[i, 0].startswith(sep, pos)
+                ]
 
                 if columns_number == 3:
                     # Split data(chars) to columns :
                     #   id:             to 1. separator
                     #   title:          between 1. and 2. sep-s
                     #   description:    from 2. to end
-                    converted_df = converted_df.append({'id': df.iloc[i, 0][0:sep_position[0]],
-                                                        'title': df.iloc[i, 0][sep_position[0] + 1:sep_position[1]],
-                                                        'description': df.iloc[i, 0][sep_position[1] + 1:]},
-                                                       ignore_index=True)
+                    converted_df = converted_df.append(
+                        {
+                            'id':
+                            df.iloc[i, 0][0:sep_position[0]],
+                            'title':
+                            df.iloc[i, 0][sep_position[0] + 1:sep_position[1]],
+                            'description':
+                            df.iloc[i, 0][sep_position[1] + 1:]
+                        },
+                        ignore_index=True)
                 if columns_number == 4:
                     # Split data(chars) to columns :
                     #   id:             to 1. separator
                     #   title:          between 1. and 2. sep-s
                     #   price:          between 2. and 3. sep-s
                     #   categoryId:          from 2. to end
-                    converted_df = converted_df.append({'id': df.iloc[i, 0][0:sep_position[0]],
-                                                        'title': df.iloc[i, 0][sep_position[0] + 1:sep_position[1]],
-                                                        'price': df.iloc[i, 0][sep_position[1] + 1:sep_position[2]],
-                                                        'categoryId': df.iloc[i, 0][sep_position[2] + 1:]},
-                                                       ignore_index=True)
+                    converted_df = converted_df.append(
+                        {
+                            'id':
+                            df.iloc[i, 0][0:sep_position[0]],
+                            'title':
+                            df.iloc[i, 0][sep_position[0] + 1:sep_position[1]],
+                            'price':
+                            df.iloc[i, 0][sep_position[1] + 1:sep_position[2]],
+                            'categoryId':
+                            df.iloc[i, 0][sep_position[2] + 1:]
+                        },
+                        ignore_index=True)
                 if columns_number == 5:
                     # Split data(chars) to columns :
                     #   id:             to 1. separator
@@ -661,13 +762,20 @@ class Market:
                     #   last_name:      between 2. and 3. sep-s
                     #   email:          between 2. and 3. sep-s
                     #   email:          between 3. to end
-                    converted_df = converted_df.append({'id': df.iloc[i, 0][0:sep_position[0]],
-                                                        'first_name': df.iloc[i, 0][
-                                                                      sep_position[0] + 1:sep_position[1]],
-                                                        'last_name': df.iloc[i, 0][sep_position[1] + 1:sep_position[2]],
-                                                        'email': df.iloc[i, 0][sep_position[2] + 1:sep_position[3]],
-                                                        'gender': df.iloc[i, 0][sep_position[3] + 1:]},
-                                                       ignore_index=True)
+                    converted_df = converted_df.append(
+                        {
+                            'id':
+                            df.iloc[i, 0][0:sep_position[0]],
+                            'first_name':
+                            df.iloc[i, 0][sep_position[0] + 1:sep_position[1]],
+                            'last_name':
+                            df.iloc[i, 0][sep_position[1] + 1:sep_position[2]],
+                            'email':
+                            df.iloc[i, 0][sep_position[2] + 1:sep_position[3]],
+                            'gender':
+                            df.iloc[i, 0][sep_position[3] + 1:]
+                        },
+                        ignore_index=True)
                 i += 1
         return converted_df
 
@@ -681,29 +789,39 @@ class Market:
         while i < df.count()[0]:
             try:
                 if not df.iloc[i, 0].isnumeric():
-                    print('Table: Customers. Error with id in row:', i, 'It will be deleted.')
+                    print('Table: Customers. Error with id in row:', i,
+                          'It will be deleted.')
                     df = df.drop(i + exception_counter, axis=0)
                     exception_counter += 1
 
                 for word in df.iloc[i, 1].split(sep=' '):
                     if not word.isalpha():
-                        print('Table: Customers. Error with first name in row:', i, 'It will be deleted.')
+                        print(
+                            'Table: Customers. Error with first name in row:',
+                            i, 'It will be deleted.')
                         df = df.drop(i + exception_counter, axis=0)
                         exception_counter += 1
 
                 for word in df.iloc[i, 2].split(sep=' '):
                     if not word.isalpha():
-                        print('Table: Customers. Error with last name in row:', i, 'It will be deleted.')
+                        print('Table: Customers. Error with last name in row:',
+                              i, 'It will be deleted.')
                         df = df.drop(i + exception_counter, axis=0)
                         exception_counter += 1
 
-                if (df.iloc[i, 3].find('@') < 1) or (df.iloc[i, 3].find('.') < 3) or not (df.iloc[i, 3][-1].isalpha()):
-                    print('Table: Customers. Incorrect email in row:', i, 'was moved to additional info.')
-                    df.additionalInfo[i + exception_counter] = df.email[i + exception_counter]
+                if (df.iloc[i, 3].find('@')
+                        < 1) or (df.iloc[i, 3].find('.')
+                                 < 3) or not (df.iloc[i, 3][-1].isalpha()):
+                    print('Table: Customers. Incorrect email in row:', i,
+                          'was moved to additional info.')
+                    df.additionalInfo[i + exception_counter] = df.email[
+                        i + exception_counter]
                     df.email[i + exception_counter] = ''
 
-                if not (df.iloc[i, 4].lower() == 'male' or df.iloc[i, 4].lower() == 'female'):
-                    print('Table: Persons. Error with gender in row:', i, 'It will be deleted.')
+                if not (df.iloc[i, 4].lower() == 'male'
+                        or df.iloc[i, 4].lower() == 'female'):
+                    print('Table: Persons. Error with gender in row:', i,
+                          'It will be deleted.')
                     df = df.drop(i + exception_counter, axis=0)
                     exception_counter += 1
 
@@ -721,19 +839,23 @@ class Market:
         while i < df.count()[0]:
             try:
                 if not df.iloc[i, 0].isnumeric():
-                    print('Table: Goods. Error with id in row:', i, 'It will be deleted.')
+                    print('Table: Goods. Error with id in row:', i,
+                          'It will be deleted.')
                     df = df.drop(i + exception_counter, axis=0)
                     exception_counter += 1
                 if df.iloc[i, 1] == '':
-                    print('Table: Goods. Error with title in row:', i, 'It will be deleted.')
+                    print('Table: Goods. Error with title in row:', i,
+                          'It will be deleted.')
                     df = df.drop(i + exception_counter, axis=0)
                     exception_counter += 1
                 if not df.iloc[i, 2].isnumeric():
-                    print('Table: Goods. Error with price in row:', i, 'It will be deleted.')
+                    print('Table: Goods. Error with price in row:', i,
+                          'It will be deleted.')
                     df = df.drop(i + exception_counter, axis=0)
                     exception_counter += 1
                 if not df.iloc[i, 3].isnumeric():
-                    print('Table: Goods. Error with category_id in row:', i, 'It will be deleted.')
+                    print('Table: Goods. Error with category_id in row:', i,
+                          'It will be deleted.')
                     df = df.drop(i + exception_counter, axis=0)
                     exception_counter += 1
                 i += 1
@@ -751,17 +873,21 @@ class Market:
         while i < df.count()[0]:
             try:
                 if not df.iloc[i, 0].isnumeric():
-                    print('Table: Categories. Error with id in row:', i, 'It will be deleted.')
+                    print('Table: Categories. Error with id in row:', i,
+                          'It will be deleted.')
                     df = df.drop(i, axis=0)
                     break
                 for word in df.iloc[i, 1].split(sep=' '):
                     if not word.isalnum():
-                        print('Table: Categories. Error with title in row:', i, 'It will be deleted.')
+                        print('Table: Categories. Error with title in row:', i,
+                              'It will be deleted.')
                         df = df.drop(i, axis=0)
                         break
                 for word in df.iloc[i, 2].split(sep=' '):
                     if not word.isalnum():
-                        print('Table: Categories. Error with description in row:', i, 'It will be deleted.')
+                        print(
+                            'Table: Categories. Error with description in row:',
+                            i, 'It will be deleted.')
                         df = df.drop(i, axis=0)
                         break
             except:
